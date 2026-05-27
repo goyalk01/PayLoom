@@ -80,6 +80,8 @@ model Payment {
 
   order Order @relation(fields: [orderId], references: [id])
 
+  @@unique([provider, providerOrderId])
+  @@unique([provider, providerPaymentId])
   @@index([orderId])
 }
 

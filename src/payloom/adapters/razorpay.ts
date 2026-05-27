@@ -115,21 +115,28 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
     const isVerified = expectedSignature === params.signature;
 
     if (!isVerified) {
-      await prisma.payment.updateMany({
-        where: {
-          orderId: params.internalOrderId,
-          providerOrderId: params.providerOrderId,
-        },
-        data: {
-          providerPaymentId: params.providerPaymentId,
-          signature: params.signature,
-          status: "FAILED",
-        },
-      });
+      await prisma.$transaction(async (tx) => {
+        await tx.payment.updateMany({
+          where: {
+            orderId: params.internalOrderId,
+            providerOrderId: params.providerOrderId,
+            provider: "RAZORPAY",
+            status: { not: "SUCCESS" },
+          },
+          data: {
+            providerPaymentId: params.providerPaymentId,
+            signature: params.signature,
+            status: "FAILED",
+          },
+        });
 
-      await prisma.order.update({
-        where: { id: params.internalOrderId },
-        data: { status: "FAILED" },
+        await tx.order.updateMany({
+          where: {
+            id: params.internalOrderId,
+            status: { not: "PAID" },
+          },
+          data: { status: "FAILED" },
+        });
       });
 
       return {
@@ -138,21 +145,28 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
       };
     }
 
-    await prisma.payment.updateMany({
-      where: {
-        orderId: params.internalOrderId,
-        providerOrderId: params.providerOrderId,
-      },
-      data: {
-        providerPaymentId: params.providerPaymentId,
-        signature: params.signature,
-        status: "SUCCESS",
-      },
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.updateMany({
+        where: {
+          orderId: params.internalOrderId,
+          providerOrderId: params.providerOrderId,
+          provider: "RAZORPAY",
+          status: { not: "SUCCESS" },
+        },
+        data: {
+          providerPaymentId: params.providerPaymentId,
+          signature: params.signature,
+          status: "SUCCESS",
+        },
+      });
 
-    await prisma.order.update({
-      where: { id: params.internalOrderId },
-      data: { status: "PAID" },
+      await tx.order.updateMany({
+        where: {
+          id: params.internalOrderId,
+          status: { not: "PAID" },
+        },
+        data: { status: "PAID" },
+      });
     });
 
     return {

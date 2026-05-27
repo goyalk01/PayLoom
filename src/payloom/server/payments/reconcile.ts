@@ -46,6 +46,7 @@ export const reconcileRazorpayEvent = async (params: {
 
   const payment = await prisma.payment.findFirst({
     where: {
+      provider: "RAZORPAY",
       OR: orFilters,
     },
   });

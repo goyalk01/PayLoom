@@ -27,7 +27,7 @@ If you already know how to create a payment with a gateway, Payloom is the next 
 - Razorpay order creation and signature verification.
 - Provider adapter pattern ready for future gateways.
 - Webhook-ready backend structure with signature verification helpers.
-- Prisma persistence for `User`, `Order`, `Payment`, and webhook logs.
+- Prisma persistence for `User`, `Order`, `Payment`, and webhook events.
 - Thin API routes that delegate to billing and adapters.
 - TypeScript-first DX and predictable data contracts.
 
@@ -129,6 +129,22 @@ pnpm prisma generate
 pnpm prisma migrate dev --name init
 pnpm dev
 ```
+
+# Production Deployment Notes
+
+Use the production-safe Prisma flow and build steps:
+
+```bash
+pnpm prisma migrate deploy
+pnpm build
+pnpm start
+```
+
+Ensure:
+
+- `NEXT_PUBLIC_APP_URL` matches your deployed URL.
+- `RAZORPAY_WEBHOOK_SECRET` is configured.
+- Razorpay webhooks point to a public endpoint (for example, an ngrok URL in test mode).
 
 Optional: open Prisma Studio
 
