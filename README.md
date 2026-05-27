@@ -1,76 +1,239 @@
 # Payloom
 
-Universal plug-and-play payment toolkit.
+**Reusable payment infrastructure and checkout orchestration toolkit.**
 
-## Stack
+![Status](https://img.shields.io/badge/status-active-10b981)
+![License](https://img.shields.io/badge/license-MIT-0f172a)
+![Next.js](https://img.shields.io/badge/nextjs-app%20router-000000)
+![Prisma](https://img.shields.io/badge/prisma-orm-0a0a0a)
+![Razorpay](https://img.shields.io/badge/razorpay-test%20mode-1a73e8)
 
-- Next.js App Router
-- TypeScript
-- pnpm
-- Prisma
-- Neon Postgres
-- Zod
-- shadcn/ui
+Payloom is a TypeScript-first toolkit for payment lifecycle orchestration. It provides a reliable, reusable checkout DX on top of a verified backend flow, with strong separation between pricing, provider adapters, and UI state.
 
-## Setup
+---
 
-1. Install dependencies:
+# Overview
 
-	```bash
-	pnpm install
-	```
+Payloom exists to turn one-off payment integrations into a clean, repeatable system. Instead of mixing UI callbacks, gateway SDKs, and database writes in a single flow, Payloom organizes the payment lifecycle into composable layers: billing logic, adapter operations, API routes, Zustand-powered UI state, and webhook-ready reliability foundations.
 
-2. Create a local env file:
+If you already know how to create a payment with a gateway, Payloom is the next step: consistent orchestration, verified state transitions, and reusable primitives you can ship across products.
 
-	```bash
-	cp .env.example .env
-	```
+---
 
-	Fill in real Neon values for `DATABASE_URL` and `DIRECT_URL`.
+# Features
 
-3. Generate Prisma client and run migrations:
+- Reusable checkout primitives (`CheckoutButton`, `CheckoutModal`, `PricingCard`).
+- Centralized Zustand checkout state with explicit lifecycle phases.
+- Razorpay order creation and signature verification.
+- Provider adapter pattern ready for future gateways.
+- Webhook-ready backend structure with signature verification helpers.
+- Prisma persistence for `User`, `Order`, `Payment`, and webhook logs.
+- Thin API routes that delegate to billing and adapters.
+- TypeScript-first DX and predictable data contracts.
 
-	```bash
-	pnpm prisma generate
-	pnpm prisma migrate dev --name init
-	```
+---
 
-4. Start the dev server:
+# Architecture
 
-	```bash
-	pnpm dev
-	```
+Payloom is organized as a layered system. UI and state are isolated from pricing and gateway logic to keep reliability and testability intact.
 
-## Environment
+```text
+UI Components
+	↓
+useCheckout hook
+	↓
+Zustand Store (checkout lifecycle)
+	↓
+API Routes (thin orchestration)
+	↓
+Billing Layer (trusted pricing)
+	↓
+Provider Adapter (Razorpay)
+	↓
+Prisma Persistence / Neon
+	↓
+Webhook Layer (reliability backstop)
+```
 
-The `.env.example` file includes the required keys. Populate `.env` with:
+**Responsibilities**
 
-- `DATABASE_URL`: Neon pooled connection string for runtime
-- `DIRECT_URL`: Neon direct connection string for migrations
-- `RAZORPAY_KEY_ID`: Razorpay test key ID (server only)
-- `RAZORPAY_KEY_SECRET`: Razorpay test key secret (server only)
-- `NEXT_PUBLIC_RAZORPAY_KEY_ID`: Razorpay test key ID for the client
+- **UI**: Reusable checkout primitives and clear lifecycle UX.
+- **Hooks**: Orchestrate client flow and update state.
+- **Zustand Store**: Centralized, explicit checkout phases.
+- **API Routes**: Validate input and delegate to billing/adapters only.
+- **Billing Layer**: Trusted pricing and coupon validation.
+- **Adapters**: Provider-specific operations (Razorpay order + verify).
+- **Webhook Layer**: Signature verification and event logging.
 
-## Prisma Commands
+---
+
+# Checkout Lifecycle
+
+Payloom tracks explicit phases for a reliable UX and deterministic retries:
+
+- `idle`
+- `creating_order`
+- `checkout_open`
+- `verifying`
+- `success`
+- `failed`
+- `dismissed`
+
+---
+
+# Folder Structure
+
+```text
+src/
+	app/                     Next.js App Router routes
+		api/payments/          create-order, verify, webhook routes
+		checkout/              demo page for reusable primitives
+	lib/                     shared libs (Prisma, utils)
+	payloom/
+		adapters/              payment provider adapters
+		billing/               pricing and coupon placeholders
+		core/                  config, router, types, contracts
+		hooks/                 reusable checkout hook
+		stores/                Zustand checkout store
+		ui/                    reusable checkout components
+		server/webhooks/       webhook verification helpers
+```
+
+---
+
+# Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Web framework | Next.js App Router |
+| Language | TypeScript |
+| Database | Neon Postgres |
+| ORM | Prisma |
+| Payment gateway | Razorpay (test mode) |
+| State management | Zustand |
+| UI | Tailwind + shadcn/ui |
+
+---
+
+# Local Development Setup
+
+```bash
+pnpm install
+cp .env.example .env
+```
+
+Update `.env` with Neon and Razorpay test keys.
 
 ```bash
 pnpm prisma generate
 pnpm prisma migrate dev --name init
+pnpm dev
 ```
 
-## Health Route
+Optional: open Prisma Studio
 
-http://localhost:3000/api/health
+```bash
+pnpm prisma studio
+```
 
-## Checkout Route
+Routes:
 
-http://localhost:3000/checkout
+- `GET /api/health`
+- `GET /checkout`
 
-## Segment 1 Checklist
+---
 
-- [ ] Next.js App Router scaffolded
-- [ ] Prisma connected to Neon
-- [ ] Initial schema migrated
-- [ ] shadcn/ui initialized
-- [ ] Health API responding
-- [ ] Payloom core skeleton present
+# Environment Variables
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | Runtime connection string (Neon pooled) |
+| `DIRECT_URL` | Yes | Migrations connection string (Neon direct) |
+| `NEXT_PUBLIC_APP_URL` | Yes | Public app URL |
+| `PAYLOOM_ENV` | Yes | Environment mode (`development`, `test`, `production`) |
+| `DEFAULT_CURRENCY` | Yes | Default currency (e.g. `INR`) |
+| `PAYMENT_PROVIDER` | Yes | Active provider (`razorpay`) |
+| `RAZORPAY_KEY_ID` | Yes | Razorpay server key ID |
+| `RAZORPAY_KEY_SECRET` | Yes | Razorpay server key secret |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Yes | Razorpay public key for client |
+| `RAZORPAY_WEBHOOK_SECRET` | Optional | Webhook signature verification secret |
+
+---
+
+# Payment Flow
+
+1. **Create order** via `/api/payments/create-order` using trusted billing rules.
+2. **Open Razorpay Checkout** with provider order ID.
+3. **Verify payment** on the backend via `/api/payments/verify`.
+4. **Persist state** to Prisma (`Order`, `Payment`).
+5. **Webhook-ready reconciliation** for asynchronous event confirmation.
+
+---
+
+# Reliability Philosophy
+
+- **Browser callbacks are not the source of truth.** Payment success is confirmed on the server.
+- **Webhooks are the long-term reliability layer.** UI updates are fast, but webhook processing is authoritative.
+- **State orchestration is explicit.** Checkout phases make retries and failures deterministic.
+- **Pricing stays server-side.** UI never decides the payable amount.
+
+---
+
+# Example Usage
+
+```tsx
+import { CheckoutButton } from "@/payloom";
+
+<CheckoutButton
+	amount={49900}
+	product="Premium Plan"
+	userId={userId}
+/>;
+```
+
+```tsx
+import { PricingCard } from "@/payloom";
+
+<PricingCard
+	title="Pro"
+	price="Rs 999"
+	description="For serious builders"
+	features={["Unlimited projects", "Priority support", "Advanced exports"]}
+	ctaLabel="Upgrade now"
+	amount={99900}
+	product="Pro Plan"
+	userId={userId}
+/>;
+```
+
+---
+
+# Roadmap
+
+- Webhook hardening and idempotency improvements
+- Stripe adapter
+- Package extraction and SDK publishing
+- Subscription workflows
+- Replay-safe event processing
+
+---
+
+# Screenshots
+
+_Coming soon._
+
+- Checkout modal
+- Pricing card integration
+- Lifecycle states
+
+---
+
+# Contribution
+
+Contributions are welcome. Please open an issue first to discuss proposed changes.
+
+---
+
+# License
+
+MIT
