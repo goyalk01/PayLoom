@@ -81,22 +81,24 @@ export const reconcileRazorpayEvent = async (params: {
 
   if (params.eventType === "payment.failed") {
     await prisma.$transaction(async (tx) => {
-      if (payment.status !== "SUCCESS") {
-        await tx.payment.update({
-          where: { id: payment.id },
-          data: {
-            status: "FAILED",
-            providerPaymentId: providerPaymentId ?? payment.providerPaymentId,
-          },
-        });
-      }
+      await tx.payment.updateMany({
+        where: {
+          id: payment.id,
+          status: { not: "SUCCESS" },
+        },
+        data: {
+          status: "FAILED",
+          providerPaymentId: providerPaymentId ?? payment.providerPaymentId,
+        },
+      });
 
-      if (payment.status !== "SUCCESS" && order.status !== "PAID") {
-        await tx.order.update({
-          where: { id: order.id },
-          data: { status: "FAILED" },
-        });
-      }
+      await tx.order.updateMany({
+        where: {
+          id: order.id,
+          status: { not: "PAID" },
+        },
+        data: { status: "FAILED" },
+      });
     });
 
     return { processed: true };
@@ -104,22 +106,24 @@ export const reconcileRazorpayEvent = async (params: {
 
   if (params.eventType === "payment.captured" || params.eventType === "order.paid") {
     await prisma.$transaction(async (tx) => {
-      if (payment.status !== "SUCCESS") {
-        await tx.payment.update({
-          where: { id: payment.id },
-          data: {
-            status: "SUCCESS",
-            providerPaymentId: providerPaymentId ?? payment.providerPaymentId,
-          },
-        });
-      }
+      await tx.payment.updateMany({
+        where: {
+          id: payment.id,
+          status: { not: "SUCCESS" },
+        },
+        data: {
+          status: "SUCCESS",
+          providerPaymentId: providerPaymentId ?? payment.providerPaymentId,
+        },
+      });
 
-      if (order.status !== "PAID") {
-        await tx.order.update({
-          where: { id: order.id },
-          data: { status: "PAID" },
-        });
-      }
+      await tx.order.updateMany({
+        where: {
+          id: order.id,
+          status: { not: "PAID" },
+        },
+        data: { status: "PAID" },
+      });
     });
 
     return { processed: true };

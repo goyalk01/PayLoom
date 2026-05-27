@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { createHmac } from "crypto";
 import Razorpay from "razorpay";
 
@@ -11,6 +12,7 @@ import type {
   VerifyPaymentResult,
 } from "@/payloom/core/contracts";
 import { payloomConfig } from "@/payloom/core/config";
+import { safeCompare } from "@/payloom/core/crypto";
 import {
   PayloomConfigError,
   PayloomValidationError,
@@ -58,32 +60,44 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
         status: "PENDING",
         provider: "RAZORPAY",
         couponCode: pricing.appliedCoupon,
-        metadata: params.metadata ?? undefined,
+        metadata: params.metadata
+  ? (params.metadata as Prisma.InputJsonValue)
+  : undefined,
       },
     });
 
-    const razorpay = getRazorpayClient();
-    const providerOrder = await razorpay.orders.create({
-      amount: pricing.finalAmount,
-      currency,
-      receipt: internalOrder.id,
-      notes: {
-        internalOrderId: internalOrder.id,
-        productName: params.productName,
-      },
-    });
+    let providerOrder;
 
-    await prisma.payment.create({
-      data: {
-        orderId: internalOrder.id,
-        providerOrderId: providerOrder.id,
+    try {
+      const razorpay = getRazorpayClient();
+      providerOrder = await razorpay.orders.create({
         amount: pricing.finalAmount,
         currency,
-        status: "PENDING",
-        provider: "RAZORPAY",
-        rawPayload: providerOrder,
-      },
-    });
+        receipt: internalOrder.id,
+        notes: {
+          internalOrderId: internalOrder.id,
+          productName: params.productName,
+        },
+      });
+
+      await prisma.payment.create({
+        data: {
+          orderId: internalOrder.id,
+          providerOrderId: providerOrder.id,
+          amount: pricing.finalAmount,
+          currency,
+          status: "PENDING",
+          provider: "RAZORPAY",
+          rawPayload: providerOrder as unknown as Prisma.InputJsonValue,
+        },
+      });
+    } catch (error) {
+      await prisma.order.update({
+        where: { id: internalOrder.id },
+        data: { status: "FAILED" },
+      });
+      throw error;
+    }
 
     return {
       internalOrderId: internalOrder.id,
@@ -112,7 +126,7 @@ export class RazorpayAdapter implements PaymentProviderAdapter {
       .update(`${params.providerOrderId}|${params.providerPaymentId}`)
       .digest("hex");
 
-    const isVerified = expectedSignature === params.signature;
+    const isVerified = safeCompare(expectedSignature, params.signature);
 
     if (!isVerified) {
       await prisma.$transaction(async (tx) => {

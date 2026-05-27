@@ -172,7 +172,7 @@ Routes:
 | `RAZORPAY_KEY_ID` | Yes | Razorpay server key ID |
 | `RAZORPAY_KEY_SECRET` | Yes | Razorpay server key secret |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Yes | Razorpay public key for client |
-| `RAZORPAY_WEBHOOK_SECRET` | Optional | Webhook signature verification secret |
+| `RAZORPAY_WEBHOOK_SECRET` | Yes | Webhook signature verification secret (required for webhook processing) |
 
 ---
 

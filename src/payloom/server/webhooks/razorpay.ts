@@ -1,4 +1,6 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac } from "crypto";
+
+import { safeCompare } from "@/payloom/core/crypto";
 
 export type RazorpayWebhookEvent = {
   event?: string;
@@ -10,14 +12,6 @@ export type RazorpayWebhookResult = {
   eventType: string;
   eventId: string | null;
   payload: RazorpayWebhookEvent;
-};
-
-const safeCompare = (left: string, right: string) => {
-  if (left.length !== right.length) {
-    return false;
-  }
-
-  return timingSafeEqual(Buffer.from(left), Buffer.from(right));
 };
 
 export const verifyRazorpayWebhookSignature = (params: {

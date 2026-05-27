@@ -12,7 +12,7 @@ const createOrderSchema = z.object({
   productName: z.string().min(1),
   baseAmount: z.number().int().positive(),
   currency: z.enum(["INR", "USD", "EUR"]).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   couponCode: z.string().nullable().optional(),
 });
 

@@ -299,17 +299,17 @@ export const useCheckout = () => {
     return "Ready to checkout.";
   }, [error, phase]);
 
-  const statusTone = useMemo(() => {
-    if (phase === "failed") {
-      return "error";
-    }
+  const statusTone = useMemo<"info" | "error" | "success">(() => {
+  if (phase === "failed") {
+    return "error";
+  }
 
-    if (phase === "success") {
-      return "success";
-    }
+  if (phase === "success") {
+    return "success";
+  }
 
-    return "info";
-  }, [phase]);
+  return "info";
+}, [phase]);
 
   const isLoading = phase === "creating_order" || phase === "verifying";
   const isBusy = isLoading || phase === "checkout_open";

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
           where: { eventId },
           data: {
             eventType: parsedEvent.eventType,
-            payload: parsedEvent.payload,
+            payload: parsedEvent.payload as Prisma.InputJsonValue,
             processed: false,
             error: null,
           },
@@ -76,14 +77,14 @@ export async function POST(request: Request) {
             provider: "RAZORPAY",
             eventType: parsedEvent.eventType,
             eventId,
-            payload: parsedEvent.payload,
+            payload: parsedEvent.payload as Prisma.InputJsonValue,
             processed: false,
           },
         });
 
     const reconciliation = await reconcileRazorpayEvent({
       eventType: eventRecord.eventType,
-      payload: eventRecord.payload as Record<string, any>,
+      payload: eventRecord.payload as Record<string, unknown>,
     });
 
     await prisma.webhookEvent.update({
