@@ -234,6 +234,8 @@ Contributions are welcome. Please open an issue first to discuss proposed change
 
 ---
 
+.github
+
 # License
 
 MIT

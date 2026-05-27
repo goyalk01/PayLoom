@@ -13,16 +13,19 @@ export type CheckoutSessionPayload = {
   userId: string;
   product: string;
   amount: number;
+  currency?: string | null;
   couponCode?: string | null;
 };
 
 export type CheckoutStoreState = {
+  sessionId: string | null;
   isOpen: boolean;
   phase: CheckoutPhase;
   error: string | null;
   userId: string | null;
   product: string | null;
   amount: number | null;
+  currency: string | null;
   couponCode: string | null;
   orderId: string | null;
   providerOrderId: string | null;
@@ -35,6 +38,7 @@ export type CheckoutStoreState = {
     orderId: string;
     providerOrderId: string;
     amount?: number | null;
+    currency?: string | null;
   }) => void;
   setVerifying: (data: {
     paymentId: string;
@@ -55,14 +59,23 @@ export type CheckoutStoreState = {
 };
 
 const now = () => Date.now();
+const createSessionId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+};
 
 const initialState = {
+  sessionId: null,
   isOpen: false,
   phase: "idle" as CheckoutPhase,
   error: null,
   userId: null,
   product: null,
   amount: null,
+  currency: null,
   couponCode: null,
   orderId: null,
   providerOrderId: null,
@@ -76,10 +89,12 @@ export const useCheckoutStore = create<CheckoutStoreState>((set) => ({
   openSession: (payload) =>
     set(() => ({
       ...initialState,
+      sessionId: createSessionId(),
       isOpen: true,
       userId: payload.userId,
       product: payload.product,
       amount: payload.amount,
+      currency: payload.currency ?? null,
       couponCode: payload.couponCode ?? null,
       lastUpdatedAt: now(),
     })),
@@ -97,6 +112,7 @@ export const useCheckoutStore = create<CheckoutStoreState>((set) => ({
       orderId: data.orderId ?? state.orderId,
       providerOrderId: data.providerOrderId ?? state.providerOrderId,
       amount: data.amount ?? state.amount,
+      currency: data.currency ?? state.currency,
       error: null,
       lastUpdatedAt: now(),
     })),
@@ -145,6 +161,7 @@ export const useCheckoutStore = create<CheckoutStoreState>((set) => ({
   resetSession: () =>
     set(() => ({
       ...initialState,
+      sessionId: createSessionId(),
       lastUpdatedAt: now(),
     })),
 }));

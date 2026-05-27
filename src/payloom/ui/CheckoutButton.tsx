@@ -80,7 +80,7 @@ export function CheckoutButton({
         isOpen={isOpen}
         productName={requestData?.product ?? product}
         amount={paymentData?.amount ?? requestData?.amount ?? amount}
-        currency="INR"
+        currency={paymentData?.currency ?? requestData?.currency ?? currency ?? "INR"}
         phase={phase}
         statusMessage={error ?? statusMessage}
         statusTone={statusTone}

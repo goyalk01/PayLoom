@@ -113,12 +113,15 @@ model CouponUsage {
   @@index([userId])
 }
 
-model WebhookLog {
-  id        String          @id @default(cuid())
-  provider  PaymentProvider
-  eventType String
-  eventId   String?         @unique
-  payload   Json
-  processed Boolean         @default(false)
-  createdAt DateTime        @default(now())
+model WebhookEvent {
+  id          String          @id @default(cuid())
+  provider    PaymentProvider
+  eventId     String          @unique
+  eventType   String
+  payload     Json
+  processed   Boolean         @default(false)
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }

@@ -23,8 +23,8 @@ type CheckoutModalProps = {
   onReset?: () => void;
 };
 
-const formatAmount = (amount?: number, currency?: string) => {
-  if (!amount || !currency) {
+const formatAmount = (amount?: number | null, currency?: string) => {
+  if (amount === null || amount === undefined || !currency) {
     return "--";
   }
 

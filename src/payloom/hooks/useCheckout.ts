@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useRef } from "react";
 
 import {
-  type CheckoutPhase,
   type CheckoutSessionPayload,
   useCheckoutStore,
 } from "@/payloom/stores/checkout.store";
@@ -23,6 +22,7 @@ export type CheckoutPaymentData = {
   paymentId: string | null;
   signature: string | null;
   amount: number | null;
+  currency: string | null;
 };
 
 type CheckoutHandlers = {
@@ -82,12 +82,14 @@ const toErrorMessage = (error: unknown, fallback: string) => {
 
 export const useCheckout = () => {
   const {
+    sessionId,
     isOpen,
     phase,
     error,
     userId,
     product,
     amount,
+    currency,
     couponCode,
     orderId,
     providerOrderId,
@@ -122,6 +124,7 @@ export const useCheckout = () => {
         userId: request.userId,
         product: request.productName,
         amount: request.baseAmount,
+        currency: request.currency ?? null,
         couponCode: request.couponCode ?? null,
       };
 
@@ -165,6 +168,7 @@ export const useCheckout = () => {
           orderId: orderData.internalOrderId,
           providerOrderId: orderData.providerOrderId,
           amount: orderData.amount,
+          currency: orderData.currency,
         });
 
         const scriptLoaded = await loadRazorpayScript();
@@ -230,6 +234,7 @@ export const useCheckout = () => {
               paymentId: response.razorpay_payment_id,
               signature: response.razorpay_signature,
               amount: orderData.amount,
+              currency: orderData.currency,
             });
           },
           modal: {
@@ -315,6 +320,7 @@ export const useCheckout = () => {
     paymentId,
     signature,
     amount,
+    currency,
   };
 
   return {
@@ -322,6 +328,7 @@ export const useCheckout = () => {
     closeCheckout,
     resetCheckout,
     retryCheckout,
+    sessionId,
     isOpen,
     isLoading,
     isBusy,
@@ -334,6 +341,7 @@ export const useCheckout = () => {
       userId,
       product,
       amount,
+      currency,
       couponCode,
     },
   };
